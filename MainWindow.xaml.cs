@@ -1,7 +1,9 @@
 using System.ComponentModel;
 using Microsoft.UI.Xaml;
+using StopwatchWidget.Services;
 using StopwatchWidget.ViewModels;
 using WinUIEx;
+using WinRT.Interop;
 using Windows.Graphics;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -17,6 +19,7 @@ namespace StopwatchWidget;
 public sealed partial class MainWindow : Window
 {
     private readonly WindowManager _windowManager;
+    private readonly SystemStateService _systemStateService;
 
     /// <summary>
     /// The view model backing this window's UI.
@@ -55,6 +58,12 @@ public sealed partial class MainWindow : Window
         // Keep the real window in sync with the toggle.
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
         ApplyAlwaysOnTop();
+
+        // Pause the stopwatch while the session is locked or the display is off,
+        // and resume it once the user is back.
+        var hwnd = WindowNative.GetWindowHandle(this);
+        _systemStateService = new SystemStateService(hwnd, DispatcherQueue, ViewModel);
+        Closed += (_, _) => _systemStateService.Dispose();
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
