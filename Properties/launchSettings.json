@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "StopwatchWidget (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "StopwatchWidget (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
