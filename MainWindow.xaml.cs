@@ -1,7 +1,7 @@
 using System.ComponentModel;
-using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using StopwatchWidget.ViewModels;
+using WinUIEx;
 using Windows.Graphics;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -10,11 +10,14 @@ using Windows.Graphics;
 namespace StopwatchWidget;
 
 /// <summary>
-/// The application window. It hosts the stopwatch UI directly and binds it to a
-/// <see cref="StopwatchViewModel"/> supplied as the content's DataContext.
+/// The application window. It hosts the stopwatch UI directly, binds it to a
+/// <see cref="StopwatchViewModel"/>, and uses WinUIEx's <see cref="WindowManager"/>
+/// to drive the underlying window presenter.
 /// </summary>
 public sealed partial class MainWindow : Window
 {
+    private readonly WindowManager _windowManager;
+
     /// <summary>
     /// The view model backing this window's UI.
     /// </summary>
@@ -26,6 +29,10 @@ public sealed partial class MainWindow : Window
 
         InitializeComponent();
 
+        // WindowManager wraps the window's OverlappedPresenter and exposes
+        // convenient properties for size, resize/minimize/maximize and z-order.
+        _windowManager = WindowManager.Get(this);
+
         // Let the content fill the whole window, including the title bar area,
         // then use the top strip as the drag region.
         ExtendsContentIntoTitleBar = true;
@@ -35,6 +42,11 @@ public sealed partial class MainWindow : Window
 
         // A compact size that suits a widget. Adjust or remove as you like.
         AppWindow.Resize(new SizeInt32(360, 250));
+
+        // Presenter behaviour: the widget can be resized and minimized, but not maximized.
+        _windowManager.IsResizable = true;
+        _windowManager.IsMinimizable = true;
+        _windowManager.IsMaximizable = false;
 
         // Window is not a FrameworkElement and has no DataContext of its own,
         // so the bindings resolve against the root content element instead.
@@ -54,13 +66,11 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Pushes <see cref="StopwatchViewModel.IsAlwaysOnTop"/> to the window presenter.
+    /// Pushes <see cref="StopwatchViewModel.IsAlwaysOnTop"/> to the window via
+    /// <see cref="WindowManager"/>.
     /// </summary>
     private void ApplyAlwaysOnTop()
     {
-        if (AppWindow.Presenter is OverlappedPresenter presenter)
-        {
-            presenter.IsAlwaysOnTop = ViewModel.IsAlwaysOnTop;
-        }
+        _windowManager.IsAlwaysOnTop = ViewModel.IsAlwaysOnTop;
     }
 }
