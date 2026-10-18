@@ -5,16 +5,17 @@
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
+  xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
   xmlns:systemai="http://schemas.microsoft.com/appx/manifest/systemai/windows10"
   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
   xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
-  IgnorableNamespaces="uap uap10 rescap systemai">
+  IgnorableNamespaces="uap uap10 uap5 rescap systemai">
 
   <Identity
     Name="47138B96-6DE2-4DE7-B532-94CCAF791575"
     Publisher="CN=AppPublisher"
-    Version="1.0.0.0" />
+    Version="1.0.0.1" />
 
   <mp:PhoneIdentity PhoneProductId="47138B96-6DE2-4DE7-B532-94CCAF791575" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
@@ -74,6 +75,20 @@
             </com:ExeServer>
           </com:ComServer>
         </com:Extension>
+
+        <!--
+          Registers the widget as a startup app: it shows up under
+          Settings > Apps > Startup apps, where it can be switched on. The app can also
+          turn it on itself via Windows.ApplicationModel.StartupTask.RequestEnableAsync.
+          It starts disabled on purpose - autostart is the user's choice, not ours.
+        -->
+        <uap5:Extension Category="windows.startupTask"
+                        Executable="StopwatchWidget.exe"
+                        EntryPoint="Windows.FullTrustApplication">
+          <uap5:StartupTask TaskId="StopwatchWidgetStartup"
+                            Enabled="false"
+                            DisplayName="StopwatchWidget" />
+        </uap5:Extension>
       </Extensions>
     </Application>
   </Applications>
