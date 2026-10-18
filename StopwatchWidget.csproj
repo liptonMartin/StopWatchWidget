@@ -70,7 +70,14 @@
   <PropertyGroup>
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
     <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
-    <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
-    <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+
+    <!--
+      Trimming must stay off. WinUI 3 resolves XAML types, theme resources and
+      bindings by reflection, so the trimmer breaks the UI at runtime: in this app
+      a trimmed Release build silently stopped drawing the clock digits (the
+      TextBlock measured wide but painted nothing). Only the Debug build, where
+      trimming was already off, looked right.
+    -->
+    <PublishTrimmed>False</PublishTrimmed>
   </PropertyGroup>
 </Project>
