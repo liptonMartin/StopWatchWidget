@@ -105,6 +105,24 @@ public sealed partial class MainWindow : Window
         _systemStateService.Dispose();
     }
 
+    /// <summary>
+    /// Raises the widget to the foreground, restoring it first if the user had minimized
+    /// it. Used when a later launch hands its activation over to this instance.
+    /// </summary>
+    public void BringToFront()
+    {
+        if (AppWindow.Presenter is OverlappedPresenter { State: OverlappedPresenterState.Minimized } presenter)
+        {
+            presenter.Restore();
+        }
+
+        Activate();
+
+        // Activate() alone doesn't always win the foreground against the process that
+        // just launched us, so ask Windows for it explicitly.
+        this.SetForegroundWindow();
+    }
+
     // ── Persistence ──────────────────────────────────────────────────────────
 
     /// <summary>
