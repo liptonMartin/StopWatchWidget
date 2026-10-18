@@ -3,7 +3,14 @@
     x:Class="StopwatchWidget.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:StopwatchWidget">
+    xmlns:local="using:StopwatchWidget"
+    RequestedTheme="Dark">
+    <!--
+        The widget keeps a dark look on purpose, whatever theme the system is using. The
+        background slider works by thickening a dark tint over the acrylic material; over the
+        light material of a light theme the difference would barely be visible, and a light tint
+        would make the clock unreadable.
+    -->
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

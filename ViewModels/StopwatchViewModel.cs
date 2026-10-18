@@ -35,6 +35,7 @@ public partial class StopwatchViewModel : ObservableObject
         _timer = new DispatcherTimer { Interval = RefreshInterval };
         _timer.Tick += OnTimerTick;
 
+        BackgroundOpacity = WindowSettings.DefaultBackgroundOpacity;
         FormattedTime = StopwatchState.Format(ElapsedTime);
     }
 
@@ -64,6 +65,26 @@ public partial class StopwatchViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     public partial bool IsAlwaysOnTop { get; set; }
+
+    /// <summary>
+    /// How dense the widget's background panel is: 0 leaves the acrylic material at its most
+    /// see-through, 1 turns it into a solid panel. The clock is never affected.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(BackgroundOpacityLabel))]
+    public partial double BackgroundOpacity { get; set; }
+
+    /// <summary>
+    /// The background density rendered for the app menu, e.g. <c>60%</c>.
+    /// </summary>
+    public string BackgroundOpacityLabel => $"{BackgroundOpacity * 100:0}%";
+
+    /// <summary>
+    /// <see langword="true"/> when the command buttons are hidden, leaving only the clock
+    /// on screen. The window itself shrinks to match.
+    /// </summary>
+    [ObservableProperty]
+    public partial bool IsCommandsCollapsed { get; set; }
 
     /// <summary>
     /// Starts (or resumes) the stopwatch. Disabled while it is already running.

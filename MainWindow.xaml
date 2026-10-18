@@ -10,36 +10,93 @@
     mc:Ignorable="d">
 
     <!--
-        DesktopAcrylicBackdrop gives the window the translucent "acrylic" material.
-        On Windows 10 this falls back to a solid colour automatically.
+        The translucent "acrylic" material is set up in code-behind with a
+        DesktopAcrylicController, so that its density can follow the slider in the app menu.
+        On Windows versions without acrylic support the code falls back to a plain
+        translucent panel.
     -->
-    <Window.SystemBackdrop>
-        <DesktopAcrylicBackdrop />
-    </Window.SystemBackdrop>
 
+    <!--
+        Every row is content-sized on purpose: the window is resized to exactly this
+        content, which is what lets the widget shrink to a slim strip while the command
+        buttons are hidden.
+    -->
     <Grid x:Name="RootLayout">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!--
-            The top strip doubles as the custom title bar. Because the window
-            extends its content into the title bar area, calling
-            SetTitleBar(AppTitleBar) in code-behind makes this whole strip act as
-            the drag region (and it keeps the system caption buttons on the right).
+            The top strip doubles as the custom title bar: SetTitleBar(AppTitleBar) in
+            code-behind turns it into the drag region for the window.
+            The two buttons sit on the left because the system keeps its own minimise and
+            close buttons in the top-right corner.
         -->
-        <Grid x:Name="AppTitleBar" Grid.Row="0" Height="48">
-            <TextBlock Margin="16,0,0,0"
-                       VerticalAlignment="Center"
-                       Opacity="0.75"
-                       Style="{StaticResource CaptionTextBlockStyle}"
-                       Text="Stopwatch Widget" />
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Height="36">
+            <StackPanel Margin="6,0,0,0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="2">
+                <!-- Hides or reveals the command panel; the glyph is swapped in code. -->
+                <Button x:Name="CommandsToggleButton"
+                        Width="32"
+                        Height="32"
+                        Padding="0"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="OnCommandsToggleClick"
+                        CornerRadius="4">
+                    <FontIcon x:Name="CommandsToggleIcon" FontSize="14" Glyph="&#xE70D;" />
+                </Button>
+
+                <Button x:Name="SettingsButton"
+                        Width="32"
+                        Height="32"
+                        Padding="0"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        CornerRadius="4"
+                        ToolTipService.ToolTip="Оформление">
+                    <FontIcon FontSize="14" Glyph="&#xE713;" Opacity="0.8" />
+                    <Button.Flyout>
+                        <Flyout Placement="Bottom">
+                            <!--
+                                A flyout lives in its own popup, outside the window's visual
+                                tree, so it does not inherit the data context; it is wired up
+                                in code-behind.
+                            -->
+                            <StackPanel x:Name="SettingsPanel" Width="240" Spacing="10">
+                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Оформление" />
+
+                                <Slider x:Name="OpacitySlider"
+                                        Header="Плотность подложки"
+                                        Maximum="1"
+                                        Minimum="0"
+                                        StepFrequency="0.05"
+                                        Value="{Binding BackgroundOpacity, Mode=TwoWay}" />
+
+                                <TextBlock HorizontalAlignment="Right"
+                                           Opacity="0.7"
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Text="{Binding BackgroundOpacityLabel}" />
+
+                                <TextBlock Opacity="0.7"
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Text="Меньше — прозрачнее, больше — плотнее. Цифры всегда непрозрачны."
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+            </StackPanel>
         </Grid>
 
-        <!-- Elapsed time, refreshed by the view model every 100 ms. -->
+        <!-- Elapsed time, refreshed by the view model every 100 ms. Never translucent. -->
         <TextBlock Grid.Row="1"
+                   Margin="12,2,12,6"
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center"
                    FontFamily="Consolas"
@@ -48,10 +105,11 @@
                    IsTextSelectionEnabled="True"
                    Text="{Binding FormattedTime}" />
 
-        <!-- Commands and the always-on-top toggle. -->
-        <StackPanel Grid.Row="2"
-                    Padding="16,8,16,16"
-                    Spacing="14">
+        <!-- Commands and the always-on-top toggle; hidden when the widget is collapsed. -->
+        <StackPanel x:Name="CommandPanel"
+                    Grid.Row="2"
+                    Padding="16,4,16,14"
+                    Spacing="12">
             <StackPanel HorizontalAlignment="Center"
                         Orientation="Horizontal"
                         Spacing="8">
