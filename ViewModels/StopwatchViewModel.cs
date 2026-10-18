@@ -21,6 +21,13 @@ public partial class StopwatchViewModel : ObservableObject
     private readonly System.Diagnostics.Stopwatch _stopwatch = new();
 
     /// <summary>
+    /// Time carried over from earlier runs (or restored from disk). The live counter
+    /// can't hold it across a restart, so it lives here and is added to the running
+    /// <see cref="_stopwatch"/> whenever the elapsed time is read.
+    /// </summary>
+    private TimeSpan _accumulatedElapsed;
+
+    /// <summary>
     /// Creates the view model and wires up the UI refresh timer.
     /// </summary>
     public StopwatchViewModel()
@@ -76,6 +83,8 @@ public partial class StopwatchViewModel : ObservableObject
         }
 
         _stopwatch.Stop();
+        _accumulatedElapsed += _stopwatch.Elapsed;
+        _stopwatch.Reset();
         _timer.Stop();
         IsRunning = false;
 
@@ -90,6 +99,7 @@ public partial class StopwatchViewModel : ObservableObject
     public void Reset()
     {
         _stopwatch.Reset();
+        _accumulatedElapsed = TimeSpan.Zero;
         _timer.Stop();
         IsRunning = false;
 
@@ -123,6 +133,28 @@ public partial class StopwatchViewModel : ObservableObject
         IsAlwaysOnTop = IsAlwaysOnTop,
     };
 
+    /// <summary>
+    /// Restores a previously saved elapsed time without starting the clock.
+    /// Pressing Start afterwards keeps counting on top of the restored value.
+    /// </summary>
+    public void RestoreElapsedTime(TimeSpan elapsed)
+    {
+        if (elapsed < TimeSpan.Zero)
+        {
+            elapsed = TimeSpan.Zero;
+        }
+
+        _stopwatch.Reset();
+        _accumulatedElapsed = elapsed;
+
+        ElapsedTime = elapsed;
+        FormattedTime = StopwatchState.Format(elapsed);
+
+        // ElapsedTime isn't watched by the generated command notifications, so a
+        // restored value wouldn't otherwise enable the Reset button.
+        ResetCommand.NotifyCanExecuteChanged();
+    }
+
     private bool CanStart() => !IsRunning;
 
     private bool CanPause() => IsRunning;
@@ -133,7 +165,7 @@ public partial class StopwatchViewModel : ObservableObject
 
     private void UpdateElapsedTime()
     {
-        ElapsedTime = _stopwatch.Elapsed;
+        ElapsedTime = _accumulatedElapsed + _stopwatch.Elapsed;
         FormattedTime = StopwatchState.Format(ElapsedTime);
     }
 }
