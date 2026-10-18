@@ -1,4 +1,6 @@
 ﻿using Microsoft.UI.Xaml;
+using Microsoft.Windows.AppLifecycle;
+using Microsoft.Windows.AppNotifications;
 using StopwatchWidget.Services;
 using UnhandledExceptionEventArgs = Microsoft.UI.Xaml.UnhandledExceptionEventArgs;
 
@@ -13,6 +15,12 @@ namespace StopwatchWidget;
 public partial class App : Application
 {
     private Window? _window;
+
+    /// <summary>
+    /// App-level notifications, reachable from anywhere as
+    /// <c>((App)Application.Current).Notifications</c>.
+    /// </summary>
+    public NotificationService Notifications { get; } = new();
 
     /// <summary>
     /// Initializes the singleton application object.  This is the first line of authored code
@@ -37,14 +45,48 @@ public partial class App : Application
     {
         try
         {
+            // Register before anything reads the activation arguments: that's what lets
+            // a tap on a notification be recognized as an app-notification activation.
+            Notifications.Register();
+            Notifications.NotificationActivated += OnNotificationActivated;
+
             _window = new MainWindow();
+            _window.Closed += OnWindowClosed;
             _window.Activate();
+
+            var activation = AppInstance.GetCurrent().GetActivatedEventArgs();
+            if (activation.Kind == ExtendedActivationKind.AppNotification &&
+                activation.Data is AppNotificationActivatedEventArgs notificationArgs)
+            {
+                OnNotificationActivated(this, notificationArgs);
+            }
         }
         catch (Exception ex)
         {
             AppLog.Write("Launching the main window failed", ex);
             throw;
         }
+    }
+
+    /// <summary>
+    /// Handles a notification the user interacted with, bringing the widget forward. Can
+    /// be raised on a non-UI thread, so the window work is marshalled to the dispatcher.
+    /// </summary>
+    private void OnNotificationActivated(object? sender, AppNotificationActivatedEventArgs args)
+    {
+        var window = _window;
+        if (window is null)
+        {
+            return;
+        }
+
+        window.DispatcherQueue.TryEnqueue(() => window.Activate());
+    }
+
+    private void OnWindowClosed(object sender, WindowEventArgs args)
+    {
+        Notifications.NotificationActivated -= OnNotificationActivated;
+        Notifications.Dispose();
     }
 
     private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)

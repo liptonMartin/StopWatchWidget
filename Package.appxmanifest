@@ -7,6 +7,8 @@
   xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
   xmlns:systemai="http://schemas.microsoft.com/appx/manifest/systemai/windows10"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
   IgnorableNamespaces="uap uap10 rescap systemai">
 
   <Identity
@@ -47,6 +49,32 @@
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
       </uap:VisualElements>
+
+      <Extensions>
+        <!--
+          Lets Windows wake this app up when the user clicks one of its notifications.
+          The ToastActivatorCLSID just has to be a GUID that is unique to this app.
+        -->
+        <desktop:Extension Category="windows.toastNotificationActivation">
+          <desktop:ToastNotificationActivation ToastActivatorCLSID="9B697CF2-83A9-49A8-89E0-6ACFF8C4E718" />
+        </desktop:Extension>
+
+        <!--
+          The matching COM server. Without it the CLSID above has nothing to activate.
+          The Arguments value is a marker the Windows App SDK looks for to route the
+          activation as an app notification.
+        -->
+        <com:Extension Category="windows.comServer">
+          <com:ComServer>
+            <com:ExeServer
+              Executable="StopwatchWidget.exe"
+              DisplayName="StopwatchWidget"
+              Arguments="----AppNotificationActivated:">
+              <com:Class Id="9B697CF2-83A9-49A8-89E0-6ACFF8C4E718" DisplayName="StopwatchWidget" />
+            </com:ExeServer>
+          </com:ComServer>
+        </com:Extension>
+      </Extensions>
     </Application>
   </Applications>
 
